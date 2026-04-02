@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report_PV — レポート記録アプリ</title>
+  <meta name="description" content="複数端末から Google スプレッドシートへ情報を記録・管理する Report_PV アプリ">
+  <meta name="theme-color" content="#0f1117">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app-wrapper">
+
+  <!-- ── ヘッダー ── -->
+  <header class="app-header">
+    <div class="app-logo">
+      <div class="icon">📊</div>
+      <h1>Report_PV</h1>
+    </div>
+    <div class="header-controls">
+      <span id="header-status" style="font-size:0.78rem;color:var(--text-muted)"></span>
+    </div>
+  </header>
+
+  <!-- ── 未設定バナー ── -->
+  <div class="setup-banner" id="setup-banner">
+    <span class="icon">⚙️</span>
+    <span>
+      初回設定が必要です。
+      <strong style="cursor:pointer;text-decoration:underline" onclick="showTab('admin')">管理設定</strong>
+      タブから Google Apps Script の接続 URL を登録してください。
+    </span>
+  </div>
+
+  <!-- ── タブナビ ── -->
+  <nav class="tab-nav" role="tablist" aria-label="メインナビゲーション">
+    <button class="tab-btn active" data-tab="input"  role="tab" aria-selected="true"  id="tab-input">✏️ 入力</button>
+    <button class="tab-btn"        data-tab="view"   role="tab" aria-selected="false" id="tab-view">📋 一覧</button>
+    <button class="tab-btn"        data-tab="admin"  role="tab" aria-selected="false" id="tab-admin">⚙️ 設定</button>
+  </nav>
+
+  <!-- ════════════════════════════════════════════════
+       入力タブ
+  ════════════════════════════════════════════════ -->
+  <div class="tab-content" data-tab="input">
+    <div class="card">
+
+      <!-- シート選択ピル -->
+      <div class="sheet-select-wrapper">
+        <p class="sheet-select-label">記録先シート</p>
+        <div class="sheet-pills" id="sheet-pills" role="radiogroup" aria-label="記録先シートを選択"></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- ─ シンプルフォーム（TO DO / event） ─ -->
+      <div id="form-simple" class="form-section active">
+        <p class="card-title"><span class="dot"></span> 新規記録</p>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="input-date">日付</label>
+            <input type="date" id="input-date" required aria-label="日付">
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label for="input-content">内容</label>
+            <textarea id="input-content" rows="4" placeholder="内容を入力してください" required aria-label="内容"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─ フルフォーム（Report_FS / lesson / カスタム） ─ -->
+      <div id="form-full" class="form-section">
+        <p class="card-title"><span class="dot"></span> 新規記録</p>
+        <div class="form-grid two-col">
+
+          <div class="form-group">
+            <label for="input-date-full">日付</label>
+            <input type="date" id="input-date-full" required aria-label="日付">
+          </div>
+
+          <div class="form-group" style="grid-column:1/-1">
+            <label for="input-address">住所</label>
+            <div class="map-group">
+              <input type="text" id="input-address" placeholder="例：東京都新宿区西新宿2-8-1" required aria-label="住所">
+              <button class="btn-map" id="btn-get-map" type="button" aria-label="マップを開いてURLを取得">
+                🗺 マップ取得
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="input-name">
+              名前
+              <span class="optional">（任意）</span>
+            </label>
+            <input type="text" id="input-name" placeholder="担当者名など" aria-label="名前（任意）">
+          </div>
+
+          <div class="form-group" style="grid-column:1/-1">
+            <label for="input-memo">メモ</label>
+            <textarea id="input-memo" rows="4" placeholder="メモを入力してください" aria-label="メモ"></textarea>
+          </div>
+
+          <div class="form-group" style="grid-column:1/-1">
+            <label for="input-mapurl">マップ URL</label>
+            <input type="url" id="input-mapurl"
+                   placeholder="「マップ取得」ボタンで自動入力されます"
+                   aria-label="Google マップ URL">
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ─ 奉仕時間フォーム（Report_time / カスタム） ─ -->
+      <div id="form-time" class="form-section">
+        <p class="card-title"><span class="dot"></span> 新規記録</p>
+        <div class="form-grid two-col">
+
+          <div class="form-group">
+            <label for="input-time-date">日付</label>
+            <input type="date" id="input-time-date" required aria-label="日付">
+          </div>
+
+          <div class="form-group">
+            <label for="input-time-hours">時間</label>
+            <input type="number" id="input-time-hours" step="0.5" placeholder="例：2.5" required aria-label="時間">
+          </div>
+
+          <div class="form-group">
+            <label for="input-time-lessons">
+              レッスン数
+              <span class="optional">（任意）</span>
+            </label>
+            <input type="number" id="input-time-lessons" placeholder="例：1" aria-label="レッスン数">
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 決定ボタン -->
+      <button class="btn-submit" id="btn-submit-main" type="button" aria-label="記録する">
+        TO DO に記録する ▶
+      </button>
+      <p style="text-align:center;font-size:0.75rem;color:var(--text-dim);margin-top:10px">
+        Ctrl + Enter でも送信できます
+      </p>
+
+    </div>
+  </div><!-- /input tab -->
+
+
+  <!-- ════════════════════════════════════════════════
+       一覧タブ
+  ════════════════════════════════════════════════ -->
+  <div class="tab-content" data-tab="view" style="display:none">
+    <div class="card">
+      <p class="card-title"><span class="dot"></span> 記録一覧</p>
+
+      <div class="view-controls">
+        <select id="view-sheet-select" aria-label="表示するシートを選択">
+          <!-- JS で生成 -->
+        </select>
+        <select id="view-sort-select" aria-label="並び替え">
+          <option value="date-desc">日付（新しい順）</option>
+          <option value="date-asc">日付（古い順）</option>
+        </select>
+        <button class="btn-ghost" id="btn-refresh" type="button" aria-label="データを更新">
+          🔄 更新
+        </button>
+      </div>
+
+      <div class="records-list" id="records-list">
+        <div class="empty-state">
+          <div class="icon">📋</div>
+          <p>「更新」を押してデータを読み込んでください</p>
+        </div>
+      </div>
+    </div>
+  </div><!-- /view tab -->
+
+
+  <!-- ════════════════════════════════════════════════
+       管理設定タブ
+  ════════════════════════════════════════════════ -->
+  <div class="tab-content" data-tab="admin" style="display:none">
+    <div class="card">
+      <p class="card-title"><span class="dot"></span> 管理設定</p>
+
+      <!-- GAS 接続設定 -->
+      <div class="admin-section">
+        <h3>① Google Apps Script 接続設定</h3>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:12px;line-height:1.7">
+          Google Apps Script をデプロイして取得した <strong>ウェブアプリの URL</strong> を貼り付けてください。<br>
+          （デプロイ方法の詳細は同梱の <code>gas/Code.gs</code> のコメントを参照）
+        </p>
+        <div class="gas-url-form">
+          <input type="url" id="gas-url-input"
+                 placeholder="https://script.google.com/macros/s/XXXXX/exec"
+                 aria-label="GAS ウェブアプリ URL">
+          <button class="btn-primary" id="btn-save-gas" type="button">保存</button>
+        </div>
+        <div class="gas-status none" id="gas-status">
+          ⚠ 未接続（URLを設定してください）
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- シート管理 -->
+      <div class="admin-section">
+        <h3>② シート管理</h3>
+        <div class="sheet-list" id="admin-sheet-list">
+          <!-- JS で生成 -->
+        </div>
+
+        <div class="divider"></div>
+
+        <p style="font-size:0.9rem;font-weight:600;margin-bottom:12px">新しいシートを追加</p>
+        <div class="add-sheet-form">
+          <input type="text" id="new-sheet-name"
+                 placeholder="シート名（例：Meeting）"
+                 aria-label="新しいシート名">
+          <select id="new-sheet-type" aria-label="フォームタイプ">
+            <option value="simple">シンプル（日付＋内容）</option>
+            <option value="full">フル（日付＋住所＋名前＋メモ＋Map）</option>
+            <option value="time">奉仕時間（日付＋時間＋レッスン数）</option>
+          </select>
+          <button class="btn-primary" id="btn-add-sheet" type="button">
+            ＋ 追加
+          </button>
+        </div>
+        <p style="font-size:0.78rem;color:var(--text-dim);margin-top:8px">
+          ✦ GAS接続済の場合、スプレッドシートにも同時にシートを作成します
+        </p>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- スプレッドシートリンク -->
+      <div class="admin-section">
+        <h3>③ スプレッドシートを開く</h3>
+        <a href="https://docs.google.com/spreadsheets/d/1gS2PeVAkegCXwkI6Xvub8jMuIIEPB54WQSbV39sgmE4/edit"
+           target="_blank" rel="noopener"
+           class="btn-ghost"
+           style="display:inline-flex;align-items:center;gap:8px;text-decoration:none">
+          📊 Google スプレッドシートを開く
+        </a>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- GAS デプロイ手順 -->
+      <div class="admin-section">
+        <h3>④ GAS デプロイ手順（初回のみ）</h3>
+        <ol style="font-size:0.85rem;color:var(--text-muted);line-height:2;padding-left:1.4em">
+          <li><a href="https://script.google.com" target="_blank" rel="noopener" style="color:var(--accent)">script.google.com</a> を開き、「新しいプロジェクト」を作成</li>
+          <li>同梱の <code>gas/Code.gs</code> の内容をすべてコピーして貼り付け</li>
+          <li>「デプロイ」→「新しいデプロイ」→「ウェブアプリ」を選択</li>
+          <li>アクセスできるユーザー：<strong>「全員」</strong> に設定</li>
+          <li>「デプロイ」をクリックし、表示された URL をコピー</li>
+          <li>上の「接続設定」フォームに貼り付けて「保存」</li>
+        </ol>
+      </div>
+
+    </div>
+  </div><!-- /admin tab -->
+
+</div><!-- /app-wrapper -->
+
+<!-- トースト通知コンテナ -->
+<div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
