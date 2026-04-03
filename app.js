@@ -78,7 +78,7 @@ async function gasPost(body) {
   if (!state.gasUrl) throw new Error('GASのURLが設定されていません。管理設定から接続URLを登録してください。');
   const res = await fetch(state.gasUrl, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
